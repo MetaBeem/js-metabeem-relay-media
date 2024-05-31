@@ -1,0 +1,4 @@
+#192.168.100.98   MYSQL_DEV
+#192.168.100.98   REDIS_DEV
+192.168.0.96    host.docker.internal
+#127.0.0.1    host.docker.internal

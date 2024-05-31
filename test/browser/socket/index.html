@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<script type="module">
+	import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
+
+	const socket = io( "localhost:6612" ); // only in the browser when the page is served over https (will not work in Node.js)
+	socket.on( "connect", () =>
+	{
+		console.log( `connected to server, socket.id :`, socket.id ); // x8WIv7-mJelg7on_ALbx
+
+		socket.emit( 'room-join', { roomId : 'p0x55f7009020e3c89f305bcd12b606dea55f95a0e4' }, ( response ) =>
+        {
+		    console.log( `🍉:: room-join: `, response );
+        });
+	    setTimeout( () =>
+	    {
+		    socket.emit( 'room-exist', { roomId : 'p0x55f7009020e3c89f305bcd12b606dea55f95a0e4' }, ( response ) =>
+            {
+                console.log( `🍉:: room-exist: `, response );
+            });
+	    }, 1000 );
+	    setTimeout( () =>
+	    {
+		    socket.emit( 'room-leave', { roomId : 'p0x55f7009020e3c89f305bcd12b606dea55f95a0e4' }, ( response ) =>
+            {
+                console.log( `🍉:: room-leave: `, response );
+            });
+	    }, 2000 );
+	    setTimeout( () =>
+	    {
+		    socket.emit( 'room-exist', { roomId : 'p0x55f7009020e3c89f305bcd12b606dea55f95a0e4' }, ( response ) =>
+            {
+                console.log( `🍉:: room-exist: `, response );
+            });
+	    }, 3000 );
+
+	} );
+	socket.on( "disconnect", () =>
+	{
+		console.log( `close from server, socket.id :`, socket.id );
+	} );
+	socket.on( "hello", ( arg ) =>
+	{
+		console.log( `hello message from server :`, arg );
+		socket.emit( "message", "Okay!" );
+	} );
+
+	socket.on( "room-join", ( arg ) =>
+	{
+		console.log( `>> [${ new Date().toLocaleTimeString() }] room-join:`, arg );
+	} );
+    socket.on( "room-leave", ( arg ) =>
+    {
+	    console.log( `>> [${ new Date().toLocaleTimeString() }] room-leave:`, arg );
+    } );
+    socket.on( "room-exist", ( arg ) =>
+    {
+	    console.log( `>> [${ new Date().toLocaleTimeString() }] room-exist:`, arg );
+    } );
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+version: '3'
+services:
+    #   App Docker
+    metaBeemRelayMedia: # Service Name
+        container_name: metabeem-relay-media
+        hostname: metabeem-relay-media
+        build:
+            context: .
+        image: metabeem-relay-media:latest
+        logging:
+            options:
+                max-size: "100m"
+                max-file: "5"
+        restart: always
+        ports:
+            # [local port]:[container port]
+            - "${HTTP_PORT}:${HTTP_PORT}"
+            - "${P2P_PORT}:${P2P_PORT}"
+        extra_hosts:
+            - "host.docker.internal:192.168.3.186"
+            #- "host.docker.internal:192.168.0.96"
+        volumes:
+            - ./deploy/etc/debeem/.swarmKey:/etc/debeem/.swarmKey:ro
+            #- ./deploy/etc/hosts:/etc/hosts:ro
+            #- ./deploy/etc/localtime:/etc/localtime:ro
+            #- ./deploy/etc/timezone:/etc/timezone:ro
+        env_file:
+            - ./.env
+#        environment:
+#            - REDIS_HOST=redis
+#            - REDIS_PORT=6379
+#            - NODE_ENV=production
+#        depends_on:
+#            redis:
+#                condition: service_healthy
+#        links:
+#            - redis
+#
+#    #   Redis Docker
+#    redis:
+#        image: redis:latest
+#        healthcheck:
+#            test: ["CMD", "redis-cli", "ping"]
+#            interval: 1s
+#            timeout: 2s
+#            retries: 10

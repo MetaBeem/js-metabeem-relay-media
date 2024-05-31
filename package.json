@@ -1,0 +1,52 @@
+{
+	"name": "metabeem-relay-media",
+	"version": "1.0.0",
+	"description": "",
+	"keywords": [],
+	"leadMaintainer": "Metabeem, Team.",
+	"main": "dist/index.js",
+	"browser": "dist/index.js",
+	"license": "MIT",
+	"type": "module",
+	"files": [
+		"src",
+		"dist"
+	],
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc",
+		"test": "jest",
+		"help": "node src/help.js",
+		"start": "node src/main.js"
+	},
+	"dependencies": {
+		"@babel/preset-typescript": "^7.22.15",
+		"@libp2p/logger": "^3.1.0",
+		"chalk": "^5.3.0",
+		"cors": "^2.8.5",
+		"debeem-id": "^1.0.18",
+		"debeem-p2p-relay": "^1.0.25",
+		"debeem-queue": "^1.0.20",
+		"debeem-store": "^1.0.50",
+		"debeem-utils": "^1.0.63",
+		"debug": "^4.3.4",
+		"deyml": "^1.0.3",
+		"ethers": "^6.7.1",
+		"express": "^4.18.2",
+		"express-rate-limit": "^7.2.0",
+		"lodash": "^4.17.21",
+		"minimist": "^1.2.8",
+		"skywalking-backend-js": "^0.7.0",
+		"uint8arrays": "^4.0.6"
+	},
+	"devDependencies": {
+		"@babel/preset-env": "^7.21.5",
+		"@jest/globals": "^29.5.0",
+		"@types/crypto-js": "^4.1.1",
+		"@types/jest": "^29.5.1",
+		"@types/lodash": "^4.14.196",
+		"@types/uuid": "^9.0.2",
+		"jest": "^29.5.0",
+		"supertest": "^6.3.3"
+	}
+}
