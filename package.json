@@ -27,7 +27,7 @@
 		"debeem-id": "^1.0.18",
 		"debeem-p2p-relay": "^1.0.25",
 		"debeem-queue": "^1.0.20",
-		"debeem-store": "^1.0.50",
+		"debeem-store": "^1.0.51",
 		"debeem-utils": "^1.0.63",
 		"debug": "^4.3.4",
 		"deyml": "^1.0.3",
