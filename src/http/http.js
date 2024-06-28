@@ -4,6 +4,8 @@ import { TestUtil } from "debeem-utils";
 import { ParamUtils } from "../utils/ParamUtils.js";
 import { httpCopy } from "./httpCopy.js";
 import { httpLimiter } from "./httpLimiter.js";
+import swaggerUI from "swagger-ui-express";
+import swaggerSpec from "./swagger.js";
 
 //	...
 const http = express();
@@ -44,6 +46,8 @@ export function startHttpServer( p2pRelay )
 			// } ) );
 			// http.use( bodyParser.json() );
 
+			// Serve Swagger documentation
+			app.use( "/api-docs", swaggerUI.serve, swaggerUI.setup( swaggerSpec ) );
 
 			//	...
 			httpLimiter( http );

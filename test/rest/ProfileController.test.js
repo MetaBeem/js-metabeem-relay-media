@@ -132,7 +132,7 @@ describe( 'ProfileController', () =>
 			//	wait for a while
 			await TestUtil.sleep( 5 * 1000 );
 
-		}, 60 * 10e3 );
+		}, 10 * 10e3 );
 	} );
 
 	describe( "Query one", () =>
@@ -373,6 +373,70 @@ describe( 'ProfileController', () =>
 	{
 		it( "should update a record by wallet and address from database", async () =>
 		{
+			const requiredKeys = SchemaUtil.getRequiredKeys( `profile` );
+			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+
+			//
+			//	create a new like with ether signature
+			//
+			let profile = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				key : oneProfileKey,
+				value : 'value1',
+				remark : 'no remark',
+				sig : ``,
+				createdAt : new Date(),
+				updatedAt : new Date()
+			};
+			profile.sig = await Web3Signer.signObject( walletObj.privateKey, profile );
+			profile.hash = await Web3Digester.hashObject( profile );
+			expect( profile.sig ).toBeDefined();
+			expect( typeof profile.sig ).toBe( 'string' );
+			expect( profile.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const response = await request( app )
+				.post( '/v1/profile/add' )
+				.send( {
+					wallet : walletObj.address, data : profile, sig : profile.sig
+				} );
+			expect( response ).toBeDefined();
+			expect( response ).toHaveProperty( 'statusCode' );
+			expect( response ).toHaveProperty( '_body' );
+			if ( 200 !== response.statusCode )
+			{
+				console.log( response );
+			}
+			expect( response.statusCode ).toBe( 200 );
+			expect( response._body ).toBeDefined();
+			expect( response._body ).toHaveProperty( 'version' );
+			expect( response._body ).toHaveProperty( 'ts' );
+			expect( response._body ).toHaveProperty( 'tu' );
+			expect( response._body ).toHaveProperty( 'error' );
+			expect( response._body ).toHaveProperty( 'data' );
+			expect( response._body.data ).toBeDefined();
+			expect( response._body.data ).toHaveProperty( 'hash' );
+			expect( response._body.data ).toHaveProperty( 'sig' );
+			expect( response._body.data.hash ).toBe( profile.hash );
+			expect( response._body.data.sig ).toBe( profile.sig );
+			if ( requiredKeys )
+			{
+				for ( const key of requiredKeys )
+				{
+					expect( response._body.data ).toHaveProperty( key );
+				}
+			}
+
+			//	...
+			savedProfile = response._body.data;
+
+
+			//
+			//	update
+			//
 			expect( savedProfile ).toBeDefined();
 			expect( savedProfile ).toHaveProperty( 'key' );
 			expect( TypeUtil.isNotEmptyString( savedProfile.key ) ).toBeTruthy();
@@ -387,10 +451,6 @@ describe( 'ProfileController', () =>
 			expect( toBeUpdated.sig ).toBeDefined();
 			expect( typeof toBeUpdated.sig ).toBe( 'string' );
 			expect( toBeUpdated.sig.length ).toBeGreaterThanOrEqual( 0 );
-
-			//	...
-			const requiredKeys = SchemaUtil.getRequiredKeys( `post` );
-			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
 
 			const updateResponse = await request( app )
 				.post( '/v1/profile/update' )
