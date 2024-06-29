@@ -3,9 +3,10 @@ import { app, startHttpServer } from "../../src/http/http.js";
 import { describe, expect } from "@jest/globals";
 import { EtherWallet, Web3Digester, Web3Signer } from "debeem-id";
 import { ethers } from "ethers";
-import { ERefDataTypes, SchemaUtil } from "debeem-store";
+import {ERefDataTypes, PostService, SchemaUtil} from "debeem-store";
 import { TestUtil } from "debeem-utils";
 import _ from "lodash";
+import {testWalletObjList} from "./PostControllerFavLike.test.js";
 
 let server = null;
 
@@ -15,8 +16,7 @@ describe( 'PostController', () =>
 	//
 	//	create a wallet by mnemonic
 	//
-	const mnemonic = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
-	const walletObj = EtherWallet.createWalletFromMnemonic( mnemonic );
+	const walletObj = testWalletObjList.alice;
 	let lastOneAddress;
 	let savedPost;
 
@@ -33,7 +33,6 @@ describe( 'PostController', () =>
 
 		//	assert ...
 		expect( walletObj ).not.toBeNull();
-		expect( walletObj.mnemonic ).toBe( mnemonic );
 		expect( walletObj.privateKey.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.address.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.index ).toBe( 0 );
@@ -55,12 +54,16 @@ describe( 'PostController', () =>
 		} );
 	} );
 
-	describe( "Add record", () =>
+	beforeEach( async () =>
 	{
-		it( "it should response the POST method by path /v1/post/add", async () =>
+		return new Promise( async ( resolve ) =>
 		{
-			//	...
-			lastOneAddress = EtherWallet.createWalletFromMnemonic().address;
+			//
+			//	will clear data
+			//
+			const postService = new PostService();
+			await postService.clearAll();
+
 
 			//
 			//	create a new post with ether signature
@@ -94,11 +97,13 @@ describe( 'PostController', () =>
 			expect( typeof newRecord.sig ).toBe( 'string' );
 			expect( newRecord.sig.length ).toBeGreaterThanOrEqual( 0 );
 
+			const postData = {
+				wallet : walletObj.address, data : newRecord, sig : newRecord.sig
+			};
+			console.log( `postData :`, JSON.stringify( postData ) );
 			const response = await request( app )
 				.post( '/v1/post/add' )
-				.send( {
-					wallet : walletObj.address, data : newRecord, sig : newRecord.sig
-				} );
+				.send( postData );
 			expect( response ).toBeDefined();
 			expect( response ).toHaveProperty( 'statusCode' );
 			expect( response ).toHaveProperty( '_body' );
@@ -123,7 +128,23 @@ describe( 'PostController', () =>
 			savedPost = response._body.data;
 
 			//	wait for a while
-			await TestUtil.sleep( 5 * 1000 );
+			await TestUtil.sleep( 3 * 1000 );
+
+			//	...
+			resolve();	// Test has been completed
+		} );
+	});
+
+
+
+	describe( "Add record", () =>
+	{
+		it( "it should response the POST method by path /v1/post/add", async () =>
+		{
+			//
+			//	tested in .beforeEach
+			//
+			expect( true ).toBeTruthy();
 
 		}, 60 * 10e3 );
 	} );
@@ -588,6 +609,35 @@ describe( 'PostController', () =>
 			expect( savedPost ).toBeDefined();
 			expect( SchemaUtil.isValidKeccak256Hash( savedPost.hash ) ).toBeTruthy();
 
+			//
+			//	queryOne for the first time
+			//
+			const queryOneResponse1 = await request( app )
+				.post( '/v1/post/queryOne' )
+				.send( {
+					wallet : walletObj.address,
+					data : { by : 'hash', hash : savedPost.hash },
+					sig : ''
+				} );
+			//console.log( `queryOneResponse1._body :`, queryOneResponse1._body );
+			expect( queryOneResponse1 ).toBeDefined();
+			expect( queryOneResponse1 ).toHaveProperty( 'statusCode' );
+			expect( queryOneResponse1 ).toHaveProperty( '_body' );
+			expect( queryOneResponse1.statusCode ).toBe( 200 );
+			expect( queryOneResponse1._body ).toBeDefined();
+			expect( queryOneResponse1._body ).toHaveProperty( 'data' );
+			expect( queryOneResponse1._body.data ).toBeDefined();
+			expect( queryOneResponse1._body.data ).toHaveProperty( 'wallet' );
+			expect( queryOneResponse1._body.data ).toHaveProperty( 'hash' );
+			expect( queryOneResponse1._body.data ).toHaveProperty( 'sig' );
+			expect( queryOneResponse1._body.data.wallet ).toBe( walletObj.address );
+			expect( queryOneResponse1._body.data.hash ).toBe( savedPost.hash );
+			expect( queryOneResponse1._body.data.sig ).toBe( savedPost.sig );
+
+
+			//
+			//	delete
+			//
 			let toBeDeleted = {
 				wallet : walletObj.address,
 				hash : savedPost.hash,
@@ -602,13 +652,15 @@ describe( 'PostController', () =>
 			const requiredKeys = SchemaUtil.getRequiredKeys( `post` );
 			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
 
+			const updatePostData = {
+				wallet : walletObj.address,
+				data : toBeDeleted,
+				sig : toBeDeleted.sig
+			};
+			console.log( `updatePostData :`, JSON.stringify( updatePostData ) );
 			const updateResponse = await request( app )
 				.post( '/v1/post/delete' )
-				.send( {
-					wallet : walletObj.address,
-					data : toBeDeleted,
-					sig : toBeDeleted.sig
-				} );
+				.send( updatePostData );
 			expect( updateResponse ).toBeDefined();
 			expect( updateResponse ).toHaveProperty( 'statusCode' );
 			expect( updateResponse ).toHaveProperty( '_body' );
@@ -640,6 +692,33 @@ describe( 'PostController', () =>
 			expect( queryOneResponse._body ).toBeDefined();
 			expect( queryOneResponse._body.data ).toBeDefined();
 			expect( queryOneResponse._body.data ).toBe( null );
+
+			//
+			const queryListResponse = await request( app )
+				.post( '/v1/post/queryList' )
+				.send( {
+					wallet : walletObj.address,
+					data : { by : 'wallet' },
+					sig : ''
+				} );
+			expect( queryListResponse ).toBeDefined();
+			expect( queryListResponse ).toHaveProperty( 'statusCode' );
+			expect( queryListResponse ).toHaveProperty( '_body' );
+			expect( queryListResponse.statusCode ).toBe( 200 );
+			expect( queryListResponse._body ).toBeDefined();
+			expect( queryListResponse._body ).toHaveProperty( 'version' );
+			expect( queryListResponse._body ).toHaveProperty( 'ts' );
+			expect( queryListResponse._body ).toHaveProperty( 'tu' );
+			expect( queryListResponse._body ).toHaveProperty( 'error' );
+			expect( queryListResponse._body ).toHaveProperty( 'data' );
+			expect( queryListResponse._body.data ).toBeDefined();
+			expect( queryListResponse._body.data ).toHaveProperty( 'total' );
+			expect( queryListResponse._body.data ).toHaveProperty( 'pageNo' );
+			expect( queryListResponse._body.data ).toHaveProperty( 'pageSize' );
+			expect( queryListResponse._body.data ).toHaveProperty( 'list' );
+			expect( Array.isArray( queryListResponse._body.data.list ) ).toBeTruthy();
+			expect( queryListResponse._body.data.total ).toBe( 0 );
+			expect( queryListResponse._body.data.total ).toBeGreaterThanOrEqual( queryListResponse._body.data.list.length );
 
 		}, 60 * 10e3 );
 	} );
