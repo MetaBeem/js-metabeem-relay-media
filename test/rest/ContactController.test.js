@@ -5,6 +5,7 @@ import { EtherWallet, Web3Digester, Web3Signer } from "debeem-id";
 import { ethers } from "ethers";
 import { SchemaUtil } from "debeem-store";
 import { TestUtil } from "debeem-utils";
+import {testWalletObjList} from "../../src/configs/TestConfig.js";
 
 let server = null;
 
@@ -14,8 +15,7 @@ describe( 'ContactController', () =>
 	//
 	//	create a wallet by mnemonic
 	//
-	const mnemonic = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
-	const walletObj = EtherWallet.createWalletFromMnemonic( mnemonic );
+	const walletObj = testWalletObjList.alice;
 	let lastOneAddress;
 
 
@@ -28,7 +28,6 @@ describe( 'ContactController', () =>
 
 		//	assert ...
 		expect( walletObj ).not.toBeNull();
-		expect( walletObj.mnemonic ).toBe( mnemonic );
 		expect( walletObj.privateKey.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.address.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.index ).toBe( 0 );
@@ -40,14 +39,15 @@ describe( 'ContactController', () =>
 		//
 		//	close http server
 		//
-		return new Promise( ( resolve ) =>
-		{
-			server.close( () =>
-			{
-				//console.log( 'Http Server is closed' );
-				resolve();	// Test has been completed
-			} );
-		} );
+		await server.close();
+		// return new Promise( ( resolve ) =>
+		// {
+		// 	server.close( () =>
+		// 	{
+		// 		//console.log( 'Http Server is closed' );
+		// 		resolve();	// Test has been completed
+		// 	} );
+		// } );
 	} );
 
 	test( 'it should response the GET method by path /', async () =>
@@ -68,7 +68,7 @@ describe( 'ContactController', () =>
 
 	describe( "Add record", () =>
 	{
-		it( "it should response the POST method by path /v1/contact/add", async () =>
+		it( "should create a contact", async () =>
 		{
 			//	...
 			lastOneAddress = EtherWallet.createWalletFromMnemonic().address;

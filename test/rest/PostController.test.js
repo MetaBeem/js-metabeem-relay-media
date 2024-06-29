@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 import {ERefDataTypes, PostService, SchemaUtil} from "debeem-store";
 import { TestUtil } from "debeem-utils";
 import _ from "lodash";
-import {testWalletObjList} from "./PostControllerFavLike.test.js";
+import {testWalletObjList} from "../../src/configs/TestConfig.js";
 
 let server = null;
 
@@ -44,14 +44,15 @@ describe( 'PostController', () =>
 		//
 		//	close http server
 		//
-		return new Promise( ( resolve ) =>
-		{
-			server.close( () =>
-			{
-				//console.log( 'Http Server is closed' );
-				resolve();	// Test has been completed
-			} );
-		} );
+		await server.close();
+		// return new Promise( ( resolve ) =>
+		// {
+		// 	server.close( () =>
+		// 	{
+		// 		//console.log( 'Http Server is closed' );
+		// 		resolve();	// Test has been completed
+		// 	} );
+		// } );
 	} );
 
 	beforeEach( async () =>
@@ -100,7 +101,7 @@ describe( 'PostController', () =>
 			const postData = {
 				wallet : walletObj.address, data : newRecord, sig : newRecord.sig
 			};
-			console.log( `postData :`, JSON.stringify( postData ) );
+			//console.log( `postData :`, JSON.stringify( postData ) );
 			const response = await request( app )
 				.post( '/v1/post/add' )
 				.send( postData );
@@ -139,7 +140,7 @@ describe( 'PostController', () =>
 
 	describe( "Add record", () =>
 	{
-		it( "it should response the POST method by path /v1/post/add", async () =>
+		it( "it should create a post", async () =>
 		{
 			//
 			//	tested in .beforeEach
@@ -657,7 +658,7 @@ describe( 'PostController', () =>
 				data : toBeDeleted,
 				sig : toBeDeleted.sig
 			};
-			console.log( `updatePostData :`, JSON.stringify( updatePostData ) );
+			//console.log( `updatePostData :`, JSON.stringify( updatePostData ) );
 			const updateResponse = await request( app )
 				.post( '/v1/post/delete' )
 				.send( updatePostData );
@@ -676,6 +677,7 @@ describe( 'PostController', () =>
 			expect( updateResponse._body ).toHaveProperty( 'error' );
 			expect( updateResponse._body ).toHaveProperty( 'data' );
 			expect( updateResponse._body.data ).toBeDefined();
+			expect( updateResponse._body.data ).toBeGreaterThanOrEqual( 1 );
 
 			//	...
 			const queryOneResponse = await request( app )
@@ -693,6 +695,8 @@ describe( 'PostController', () =>
 			expect( queryOneResponse._body.data ).toBeDefined();
 			expect( queryOneResponse._body.data ).toBe( null );
 
+			//
+			//	query post list
 			//
 			const queryListResponse = await request( app )
 				.post( '/v1/post/queryList' )
@@ -719,6 +723,37 @@ describe( 'PostController', () =>
 			expect( Array.isArray( queryListResponse._body.data.list ) ).toBeTruthy();
 			expect( queryListResponse._body.data.total ).toBe( 0 );
 			expect( queryListResponse._body.data.total ).toBeGreaterThanOrEqual( queryListResponse._body.data.list.length );
+
+			//
+			//	query recommendedPostList
+			//
+			const recommendedPostListResponse = await request( app )
+				.post( '/v1/portal/queryList' )
+				.send( {
+					wallet : walletObj.address,
+					data : { by : 'recommendedPostList', options : { pageNo : 1, pageSize : 100, sort : { createdAt : 'desc' } } },
+					sig : ''
+				} );
+			expect( recommendedPostListResponse ).toBeDefined();
+			expect( recommendedPostListResponse ).toHaveProperty( 'statusCode' );
+			expect( recommendedPostListResponse ).toHaveProperty( '_body' );
+			expect( recommendedPostListResponse.statusCode ).toBe( 200 );
+			expect( recommendedPostListResponse._body ).toBeDefined();
+			expect( recommendedPostListResponse._body ).toHaveProperty( 'version' );
+			expect( recommendedPostListResponse._body ).toHaveProperty( 'ts' );
+			expect( recommendedPostListResponse._body ).toHaveProperty( 'tu' );
+			expect( recommendedPostListResponse._body ).toHaveProperty( 'error' );
+			expect( recommendedPostListResponse._body ).toHaveProperty( 'data' );
+			expect( recommendedPostListResponse._body.data ).toBeDefined();
+			expect( recommendedPostListResponse._body.data ).toHaveProperty( 'total' );
+			expect( recommendedPostListResponse._body.data ).toHaveProperty( 'pageNo' );
+			expect( recommendedPostListResponse._body.data ).toHaveProperty( 'pageSize' );
+			expect( recommendedPostListResponse._body.data ).toHaveProperty( 'list' );
+			expect( Array.isArray( recommendedPostListResponse._body.data.list ) ).toBeTruthy();
+			expect( recommendedPostListResponse._body.data.list.length ).toBe( 0 );
+			expect( recommendedPostListResponse._body.data.total ).toBe( 0 );
+			expect( recommendedPostListResponse._body.data.total ).toBe( recommendedPostListResponse._body.data.list.length );
+
 
 		}, 60 * 10e3 );
 	} );

@@ -1,10 +1,11 @@
 import request from "supertest";
 import { app, startHttpServer } from "../../src/http/http.js";
 import { describe, expect } from "@jest/globals";
-import { EtherWallet, Web3Digester, Web3Signer } from "debeem-id";
+import { Web3Digester, Web3Signer } from "debeem-id";
 import { ethers } from "ethers";
-import { SchemaUtil } from "debeem-store";
+import {ProfileService, SchemaUtil} from "debeem-store";
 import { TestUtil, TypeUtil } from "debeem-utils";
+import {testWalletObjList} from "../../src/configs/TestConfig.js";
 
 let server = null;
 
@@ -14,8 +15,7 @@ describe( 'ProfileController', () =>
 	//
 	//	create a wallet by mnemonic
 	//
-	const mnemonic = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
-	const walletObj = EtherWallet.createWalletFromMnemonic( mnemonic );
+	const walletObj = testWalletObjList.alice;
 	let savedProfile;
 
 	const oneProfileKey = `key-m-${ new Date().getTime() }`;
@@ -30,31 +30,35 @@ describe( 'ProfileController', () =>
 
 		//	assert ...
 		expect( walletObj ).not.toBeNull();
-		expect( walletObj.mnemonic ).toBe( mnemonic );
 		expect( walletObj.privateKey.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.address.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.index ).toBe( 0 );
 		expect( walletObj.path ).toBe( ethers.defaultPath );
 
+		//	clear all
+		const profileService = new ProfileService();
+		await profileService.clearAll();
 	} );
 	afterAll( async () =>
 	{
 		//
 		//	close http server
 		//
-		return new Promise( ( resolve ) =>
-		{
-			server.close( () =>
-			{
-				//console.log( 'Http Server is closed' );
-				resolve();	// Test has been completed
-			} );
-		} );
+		await server.close();
+		// return new Promise( ( resolve ) =>
+		// {
+		// 	server.close( () =>
+		// 	{
+		// 		//console.log( 'Http Server is closed' );
+		// 		resolve();	// Test has been completed
+		// 	} );
+		// } );
 	} );
+
 
 	describe( "Add record", () =>
 	{
-		it( "it should response the POST method by path /v1/post/add", async () =>
+		it( "should create a profile", async () =>
 		{
 			//
 			//	create a new like with ether signature
@@ -133,11 +137,8 @@ describe( 'ProfileController', () =>
 			await TestUtil.sleep( 5 * 1000 );
 
 		}, 10 * 10e3 );
-	} );
 
-	describe( "Query one", () =>
-	{
-		it( "should return a record by wallet and address from database", async () =>
+		it( "should return a record by wallet and address", async () =>
 		{
 			expect( savedProfile ).toBeDefined();
 			expect( savedProfile ).toHaveProperty( 'hash' );
@@ -193,11 +194,8 @@ describe( 'ProfileController', () =>
 			expect( response._body.data.sig ).toBe( savedProfile.sig );
 
 		}, 60 * 10e3 );
-	} );
 
-	describe( "Query list", () =>
-	{
-		it( "should return a list of records from database", async () =>
+		it( "should return a list of records", async () =>
 		{
 			const response = await request( app )
 				.post( '/v1/profile/queryList' )
@@ -379,6 +377,7 @@ describe( 'ProfileController', () =>
 			//
 			//	create a new like with ether signature
 			//
+			const oneProfileKey = `key-for-updating`;
 			let profile = {
 				timestamp : new Date().getTime(),
 				hash : '',
@@ -510,6 +509,87 @@ describe( 'ProfileController', () =>
 
 	describe( "Deletion", () =>
 	{
+		it( "it should create a post", async () =>
+		{
+			//
+			//	create a new like with ether signature
+			//
+			const oneProfileKey = `key-for-deleting`;
+			let profile = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				key : oneProfileKey,
+				value : 'value1',
+				remark : 'no remark',
+				sig : ``,
+				createdAt : new Date(),
+				updatedAt : new Date()
+			};
+			profile.sig = await Web3Signer.signObject( walletObj.privateKey, profile );
+			profile.hash = await Web3Digester.hashObject( profile );
+			expect( profile.sig ).toBeDefined();
+			expect( typeof profile.sig ).toBe( 'string' );
+			expect( profile.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const response = await request( app )
+				.post( '/v1/profile/add' )
+				.send( {
+					wallet : walletObj.address, data : profile, sig : profile.sig
+				} );
+			expect( response ).toBeDefined();
+			expect( response ).toHaveProperty( 'statusCode' );
+			expect( response ).toHaveProperty( '_body' );
+			if ( 200 !== response.statusCode )
+			{
+				console.log( response );
+			}
+			expect( response.statusCode ).toBe( 200 );
+			expect( response._body ).toBeDefined();
+			expect( response._body ).toHaveProperty( 'version' );
+			expect( response._body ).toHaveProperty( 'ts' );
+			expect( response._body ).toHaveProperty( 'tu' );
+			expect( response._body ).toHaveProperty( 'error' );
+			expect( response._body ).toHaveProperty( 'data' );
+			expect( response._body.data ).toBeDefined();
+			expect( response._body.data ).toHaveProperty( 'hash' );
+			expect( response._body.data ).toHaveProperty( 'sig' );
+			expect( response._body.data.hash ).toBe( profile.hash );
+			expect( response._body.data.sig ).toBe( profile.sig );
+			const requiredKeys = SchemaUtil.getRequiredKeys( `profile` );
+			expect( Array.isArray( requiredKeys ) ).toBeTruthy();
+			if ( requiredKeys )
+			{
+				for ( const key of requiredKeys )
+				{
+					expect( response._body.data ).toHaveProperty( key );
+				}
+			}
+
+			//	...
+			savedProfile = response._body.data;
+
+
+			const responseDup = await request( app )
+				.post( '/v1/profile/add' )
+				.send( {
+					wallet : walletObj.address, data : profile, sig : profile.sig
+				} );
+			expect( responseDup ).toBeDefined();
+			expect( responseDup ).toHaveProperty( 'statusCode' );
+			expect( responseDup ).toHaveProperty( '_body' );
+			expect( responseDup.statusCode ).toBe( 400 );
+			expect( responseDup._body ).toBeDefined();
+			expect( responseDup._body ).toHaveProperty( 'error' );
+			expect( responseDup._body.error ).toBe( 'duplicate key error' );
+
+			//	wait for a while
+			await TestUtil.sleep( 5 * 1000 );
+
+		}, 10 * 10e3 );
+
 		it( `should logically delete a record by hash`, async () =>
 		{
 			expect( savedProfile ).toBeDefined();

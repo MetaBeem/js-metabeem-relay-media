@@ -5,6 +5,7 @@ import { EtherWallet, Web3Digester, Web3Signer } from "debeem-id";
 import { ethers } from "ethers";
 import { SchemaUtil } from "debeem-store";
 import { TestUtil } from "debeem-utils";
+import {testWalletObjList} from "../../src/configs/TestConfig.js";
 
 let server = null;
 
@@ -14,8 +15,7 @@ describe( 'FollowerController', () =>
 	//
 	//	create a wallet by mnemonic
 	//
-	const mnemonic = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
-	const walletObj = EtherWallet.createWalletFromMnemonic( mnemonic );
+	const walletObj = testWalletObjList.alice;
 	let oneFollowerAddress = EtherWallet.createWalletFromMnemonic().address;
 	let savedFollower;
 
@@ -29,7 +29,6 @@ describe( 'FollowerController', () =>
 
 		//	assert ...
 		expect( walletObj ).not.toBeNull();
-		expect( walletObj.mnemonic ).toBe( mnemonic );
 		expect( walletObj.privateKey.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.address.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.index ).toBe( 0 );
@@ -40,19 +39,22 @@ describe( 'FollowerController', () =>
 		//
 		//	close http server
 		//
-		return new Promise( ( resolve ) =>
-		{
-			server.close( () =>
-			{
-				//console.log( 'Http Server is closed' );
-				resolve();	// Test has been completed
-			} );
-		} );
+		await server.close();
+		// return new Promise( ( resolve ) =>
+		// {
+		// 	server.close( () =>
+		// 	{
+		// 		//console.log( 'Http Server is closed' );
+		// 		resolve();	// Test has been completed
+		// 	} );
+		// } );
 	} );
+
+
 
 	describe( "Add record", () =>
 	{
-		it( "it should response the POST method by path /v1/post/add", async () =>
+		it( "should create a follow relationship", async () =>
 		{
 			//
 			//	create a new follower with ether signature
@@ -107,13 +109,72 @@ describe( 'FollowerController', () =>
 			savedFollower = response._body.data;
 
 			//	wait for a while
-			await TestUtil.sleep( 5 * 1000 );
+			await TestUtil.sleep( 1000 );
 
 		}, 60 * 10e3 );
 	} );
 
 	describe( "Query one", () =>
 	{
+		it( "it should create a follow relationship", async () =>
+		{
+			//
+			//	create a new follower with ether signature
+			//
+			oneFollowerAddress = EtherWallet.createWalletFromMnemonic().address;
+			let follower = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				address : oneFollowerAddress,
+				sig : ``,
+				name : `Sam`,
+				avatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			follower.sig = await Web3Signer.signObject( walletObj.privateKey, follower );
+			follower.hash = await Web3Digester.hashObject( follower );
+			expect( follower.sig ).toBeDefined();
+			expect( typeof follower.sig ).toBe( 'string' );
+			expect( follower.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const response = await request( app )
+				.post( '/v1/follower/add' )
+				.send( {
+					wallet : walletObj.address, data : follower, sig : follower.sig
+				} );
+			expect( response ).toBeDefined();
+			expect( response ).toHaveProperty( 'statusCode' );
+			expect( response ).toHaveProperty( '_body' );
+			if ( 200 !== response.statusCode )
+			{
+				console.log( response );
+			}
+			expect( response.statusCode ).toBe( 200 );
+			expect( response._body ).toBeDefined();
+			expect( response._body ).toHaveProperty( 'version' );
+			expect( response._body ).toHaveProperty( 'ts' );
+			expect( response._body ).toHaveProperty( 'tu' );
+			expect( response._body ).toHaveProperty( 'error' );
+			expect( response._body ).toHaveProperty( 'data' );
+			expect( response._body.data ).toBeDefined();
+			expect( response._body.data ).toHaveProperty( 'hash' );
+			expect( response._body.data ).toHaveProperty( 'sig' );
+			expect( response._body.data.hash ).toBe( follower.hash );
+			expect( response._body.data.sig ).toBe( follower.sig );
+
+			//	...
+			savedFollower = response._body.data;
+
+			//	wait for a while
+			await TestUtil.sleep( 1000 );
+
+		}, 60 * 10e3 );
+
 		it( "should return a record by wallet and address from database", async () =>
 		{
 			expect( savedFollower ).toBeDefined();
@@ -178,7 +239,66 @@ describe( 'FollowerController', () =>
 
 	describe( "Query list", () =>
 	{
-		it( "should return a list of records from database", async () =>
+		it( "it should create a follow relationship", async () =>
+		{
+			//
+			//	create a new follower with ether signature
+			//
+			oneFollowerAddress = EtherWallet.createWalletFromMnemonic().address;
+			let follower = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				address : oneFollowerAddress,
+				sig : ``,
+				name : `Sam`,
+				avatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			follower.sig = await Web3Signer.signObject( walletObj.privateKey, follower );
+			follower.hash = await Web3Digester.hashObject( follower );
+			expect( follower.sig ).toBeDefined();
+			expect( typeof follower.sig ).toBe( 'string' );
+			expect( follower.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const response = await request( app )
+				.post( '/v1/follower/add' )
+				.send( {
+					wallet : walletObj.address, data : follower, sig : follower.sig
+				} );
+			expect( response ).toBeDefined();
+			expect( response ).toHaveProperty( 'statusCode' );
+			expect( response ).toHaveProperty( '_body' );
+			if ( 200 !== response.statusCode )
+			{
+				console.log( response );
+			}
+			expect( response.statusCode ).toBe( 200 );
+			expect( response._body ).toBeDefined();
+			expect( response._body ).toHaveProperty( 'version' );
+			expect( response._body ).toHaveProperty( 'ts' );
+			expect( response._body ).toHaveProperty( 'tu' );
+			expect( response._body ).toHaveProperty( 'error' );
+			expect( response._body ).toHaveProperty( 'data' );
+			expect( response._body.data ).toBeDefined();
+			expect( response._body.data ).toHaveProperty( 'hash' );
+			expect( response._body.data ).toHaveProperty( 'sig' );
+			expect( response._body.data.hash ).toBe( follower.hash );
+			expect( response._body.data.sig ).toBe( follower.sig );
+
+			//	...
+			savedFollower = response._body.data;
+
+			//	wait for a while
+			await TestUtil.sleep( 1000 );
+
+		}, 60 * 10e3 );
+
+		it( "should return a list of records", async () =>
 		{
 			expect( savedFollower ).toBeDefined();
 			expect( savedFollower ).toHaveProperty( 'hash' );
@@ -358,7 +478,7 @@ describe( 'FollowerController', () =>
 			}
 
 			//	wait for a while
-			await TestUtil.sleep( 5 * 1000 );
+			await TestUtil.sleep( 1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -400,7 +520,7 @@ describe( 'FollowerController', () =>
 			expect( updateResponse._body.error ).toBe( 'updating is banned' );
 
 			//	wait for a while
-			await TestUtil.sleep(5 * 1000 );
+			await TestUtil.sleep(1000 );
 
 		}, 60 * 10e3 );
 	} );
@@ -409,12 +529,103 @@ describe( 'FollowerController', () =>
 	{
 		it( `should logically delete a record by hash`, async () =>
 		{
-			expect( savedFollower ).toBeDefined();
-			expect( SchemaUtil.isValidKeccak256Hash( savedFollower.hash ) ).toBeTruthy();
+			const walletObj = testWalletObjList.alice;
 
+			//
+			//	create a new follower with ether signature
+			//
+			const newFollowerAddress = EtherWallet.createWalletFromMnemonic().address;
+			let follower = {
+				timestamp : new Date().getTime(),
+				hash : '',
+				version : '1.0.0',
+				deleted : SchemaUtil.createHexStringObjectIdFromTime( 0 ),
+				wallet : walletObj.address,
+				address : newFollowerAddress,
+				sig : ``,
+				name : `Sam`,
+				avatar : 'https://avatars.githubusercontent.com/u/142800322?v=4',
+				remark : 'no remark',
+				createdAt: new Date(),
+				updatedAt: new Date()
+			};
+			follower.sig = await Web3Signer.signObject( walletObj.privateKey, follower );
+			follower.hash = await Web3Digester.hashObject( follower );
+			expect( follower.sig ).toBeDefined();
+			expect( typeof follower.sig ).toBe( 'string' );
+			expect( follower.sig.length ).toBeGreaterThanOrEqual( 0 );
+
+			const addResponse = await request( app )
+				.post( '/v1/follower/add' )
+				.send( {
+					wallet : walletObj.address, data : follower, sig : follower.sig
+				} );
+			expect( addResponse ).toBeDefined();
+			expect( addResponse ).toHaveProperty( 'statusCode' );
+			expect( addResponse ).toHaveProperty( '_body' );
+			if ( 200 !== addResponse.statusCode )
+			{
+				console.log( addResponse );
+			}
+			expect( addResponse.statusCode ).toBe( 200 );
+			expect( addResponse._body ).toBeDefined();
+			expect( addResponse._body ).toHaveProperty( 'version' );
+			expect( addResponse._body ).toHaveProperty( 'ts' );
+			expect( addResponse._body ).toHaveProperty( 'tu' );
+			expect( addResponse._body ).toHaveProperty( 'error' );
+			expect( addResponse._body ).toHaveProperty( 'data' );
+			expect( addResponse._body.data ).toBeDefined();
+			expect( addResponse._body.data ).toHaveProperty( 'hash' );
+			expect( addResponse._body.data ).toHaveProperty( 'sig' );
+			expect( addResponse._body.data ).toHaveProperty( 'wallet' );
+			expect( addResponse._body.data ).toHaveProperty( 'address' );
+			expect( addResponse._body.data.hash ).toBe( follower.hash );
+			expect( addResponse._body.data.sig ).toBe( follower.sig );
+			expect( addResponse._body.data.wallet ).toBe( walletObj.address );
+			expect( addResponse._body.data.address ).toBe( newFollowerAddress );
+
+			//	...
+			const addedFollower = addResponse._body.data;
+			//console.log( `addedFollower :`, addedFollower );
+
+			//	wait for a while
+			await TestUtil.sleep( 1000 );
+
+			//	...
+			const queryOnePostData = {
+				wallet : walletObj.address,
+				data : { by : 'walletAndAddress', address : addedFollower.address },
+				sig : ''
+			};
+			//console.log( `queryOnePostData :`, JSON.stringify( queryOnePostData ) );
+			//	should output:
+			//	queryOnePostData : {"wallet":"0xc8f60eaf5988ac37a2963ac5fabe97f709d6b357","data":{"by":"walletAndAddress","address":"0xbbbda6fff1633a7c50e24949a87afc451b909bc3"},"sig":""}
+			const queryOneResponse1 = await request( app )
+				.post( '/v1/follower/queryOne' )
+				.send( queryOnePostData );
+			expect( queryOneResponse1 ).toBeDefined();
+			expect( queryOneResponse1 ).toHaveProperty( 'statusCode' );
+			expect( queryOneResponse1 ).toHaveProperty( '_body' );
+			expect( queryOneResponse1.statusCode ).toBe( 200 );
+			expect( queryOneResponse1._body ).toBeDefined();
+			//console.log( `queryOneResponse1._body.data :`, queryOneResponse1._body.data );
+
+			expect( queryOneResponse1._body.data ).toBeDefined();
+			expect( queryOneResponse1._body.data ).toHaveProperty( `hash` );
+			expect( queryOneResponse1._body.data ).toHaveProperty( `wallet` );
+			expect( queryOneResponse1._body.data ).toHaveProperty( `address` );
+			expect( queryOneResponse1._body.data ).toHaveProperty( `sig` );
+			expect( queryOneResponse1._body.data.wallet ).toBe( walletObj.address );
+			expect( queryOneResponse1._body.data.address ).toBe( newFollowerAddress );
+
+
+			//	wait for a while
+			await TestUtil.sleep( 1000 );
+
+			//	delete
 			let toBeDeleted = {
 				wallet : walletObj.address,
-				address : savedFollower.address,
+				address : addedFollower.address,
 				deleted : SchemaUtil.createHexStringObjectIdFromTime( 1 ),
 			};
 			toBeDeleted.sig = await Web3Signer.signObject( walletObj.privateKey, toBeDeleted );
@@ -423,44 +634,53 @@ describe( 'FollowerController', () =>
 			expect( toBeDeleted.sig.length ).toBeGreaterThanOrEqual( 0 );
 
 			//	...
-			const updateResponse = await request( app )
+			const deletePostData = {
+				wallet : walletObj.address,
+				data : toBeDeleted,
+				sig : toBeDeleted.sig
+			};
+			//console.log( `deletePostData :`, JSON.stringify( deletePostData ) );
+			const deleteResponse = await request( app )
 				.post( '/v1/follower/delete' )
-				.send( {
-					wallet : walletObj.address,
-					data : toBeDeleted,
-					sig : toBeDeleted.sig
-				} );
-			expect( updateResponse ).toBeDefined();
-			expect( updateResponse ).toHaveProperty( 'statusCode' );
-			expect( updateResponse ).toHaveProperty( '_body' );
-			if ( 200 !== updateResponse.statusCode )
+				.send( deletePostData );
+			expect( deleteResponse ).toBeDefined();
+			expect( deleteResponse ).toHaveProperty( 'statusCode' );
+			expect( deleteResponse ).toHaveProperty( '_body' );
+			if ( 200 !== deleteResponse.statusCode )
 			{
-				console.log( updateResponse );
+				console.log( deleteResponse );
 			}
-			expect( updateResponse.statusCode ).toBe( 200 );
-			expect( updateResponse._body ).toBeDefined();
-			expect( updateResponse._body ).toHaveProperty( 'version' );
-			expect( updateResponse._body ).toHaveProperty( 'ts' );
-			expect( updateResponse._body ).toHaveProperty( 'tu' );
-			expect( updateResponse._body ).toHaveProperty( 'error' );
-			expect( updateResponse._body ).toHaveProperty( 'data' );
-			expect( updateResponse._body.data ).toBeDefined();
+			expect( deleteResponse.statusCode ).toBe( 200 );
+			expect( deleteResponse._body ).toBeDefined();
+			expect( deleteResponse._body ).toHaveProperty( 'version' );
+			expect( deleteResponse._body ).toHaveProperty( 'ts' );
+			expect( deleteResponse._body ).toHaveProperty( 'tu' );
+			expect( deleteResponse._body ).toHaveProperty( 'error' );
+			expect( deleteResponse._body ).toHaveProperty( 'data' );
+			expect( deleteResponse._body.data ).toBeDefined();
+			expect( deleteResponse._body.data ).toBeGreaterThanOrEqual( 1 );
+			//console.log( `deleteResponse._body.data :`, deleteResponse._body.data );
+
+			//	wait for a while
+			await TestUtil.sleep( 1000 );
 
 			//	...
-			const queryOneResponse = await request( app )
+			const queryOneResponse2 = await request( app )
 				.post( '/v1/follower/queryOne' )
 				.send( {
 					wallet : walletObj.address,
-					data : { by : 'walletAndAddress', address : savedFollower.address },
+					data : { by : 'walletAndAddress', address : addedFollower.address },
 					sig : ''
 				} );
-			expect( queryOneResponse ).toBeDefined();
-			expect( queryOneResponse ).toHaveProperty( 'statusCode' );
-			expect( queryOneResponse ).toHaveProperty( '_body' );
-			expect( queryOneResponse.statusCode ).toBe( 200 );
-			expect( queryOneResponse._body ).toBeDefined();
-			expect( queryOneResponse._body.data ).toBeDefined();
-			expect( queryOneResponse._body.data ).toBe( null );
+			expect( queryOneResponse2 ).toBeDefined();
+			expect( queryOneResponse2 ).toHaveProperty( 'statusCode' );
+			expect( queryOneResponse2 ).toHaveProperty( '_body' );
+			expect( queryOneResponse2.statusCode ).toBe( 200 );
+			expect( queryOneResponse2._body ).toBeDefined();
+			//console.log( `queryOneResponse2._body.data :`, queryOneResponse2._body.data );
+			expect( queryOneResponse2._body.data ).toBeDefined();
+			expect( queryOneResponse2._body.data ).toBe( null );
+
 
 		}, 60 * 10e3 );
 	} );

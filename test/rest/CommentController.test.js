@@ -5,6 +5,7 @@ import { EtherWallet, Web3Digester, Web3Signer } from "debeem-id";
 import { ethers } from "ethers";
 import { ERefDataTypes, SchemaUtil } from "debeem-store";
 import { TestUtil } from "debeem-utils";
+import {testWalletObjList} from "../../src/configs/TestConfig.js";
 
 let server = null;
 
@@ -14,8 +15,7 @@ describe( 'CommentController', () =>
 	//
 	//	create a wallet by mnemonic
 	//
-	const mnemonic = 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient';
-	const walletObj = EtherWallet.createWalletFromMnemonic( mnemonic );
+	const walletObj = testWalletObjList.alice;
 	let savedPost;
 	let savedComment;
 
@@ -32,7 +32,6 @@ describe( 'CommentController', () =>
 
 		//	assert ...
 		expect( walletObj ).not.toBeNull();
-		expect( walletObj.mnemonic ).toBe( mnemonic );
 		expect( walletObj.privateKey.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.address.startsWith( '0x' ) ).toBe( true );
 		expect( walletObj.index ).toBe( 0 );
@@ -103,19 +102,20 @@ describe( 'CommentController', () =>
 		//
 		//	close http server
 		//
-		return new Promise( ( resolve ) =>
-		{
-			server.close( () =>
-			{
-				//console.log( 'Http Server is closed' );
-				resolve();	// Test has been completed
-			} );
-		} );
+		await server.close();
+		// return new Promise( ( resolve ) =>
+		// {
+		// 	server.close( () =>
+		// 	{
+		// 		//console.log( 'Http Server is closed' );
+		// 		resolve();	// Test has been completed
+		// 	} );
+		// } );
 	} );
 
 	describe( "Add record", () =>
 	{
-		it( "it should response the POST method by path /v1/post/add", async () =>
+		it( "should create a comment for an existing post", async () =>
 		{
 			expect( savedPost ).toBeDefined();
 			expect( savedPost ).toHaveProperty( 'hash' );

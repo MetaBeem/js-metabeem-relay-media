@@ -6,33 +6,10 @@ import { ERefDataTypes, FavoriteService, FollowerService, LikeService, PostServi
 import { TestUtil, TypeUtil } from "debeem-utils";
 import _ from "lodash";
 import { isAddress } from "ethers";
+import {testUserList, testWalletObjList} from "../../src/configs/TestConfig.js";
 
 let server = null;
 
-
-/**
- *    define test users
- */
-export const testUserList = [
-	{
-		id : 1,
-		name : 'Alice',
-		mnemonic : 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient',
-	},
-	{
-		id : 2,
-		name : 'Bob',
-		mnemonic : 'evidence cement snap basket genre fantasy degree ability sunset pistol palace target',
-	},
-	{
-		id : 3,
-		name : 'Mary',
-		mnemonic : 'electric shoot legal trial crane rib garlic claw armed snow blind advance',
-	}
-];
-export const testUserAlice = 0;
-export const testUserBob = 1;
-export const testUserMary = 2;
 
 
 describe( 'PortalController', () =>
@@ -71,14 +48,15 @@ describe( 'PortalController', () =>
 		//
 		//	close http server
 		//
-		return new Promise( ( resolve ) =>
-		{
-			server.close( () =>
-			{
-				//console.log( 'Http Server is closed' );
-				resolve();	// Test has been completed
-			} );
-		} );
+		await server.close();
+		// return new Promise( ( resolve ) =>
+		// {
+		// 	server.close( () =>
+		// 	{
+		// 		//console.log( 'Http Server is closed' );
+		// 		resolve();	// Test has been completed
+		// 	} );
+		// } );
 	} );
 
 
@@ -89,7 +67,7 @@ describe( 'PortalController', () =>
 			for ( let i = 0; i < 50; i++ )
 			{
 				//	randomly, choose a user
-				walletObj = EtherWallet.createWalletFromMnemonic( testUserList[ new Date().getTime() % 3 ].mnemonic );
+				walletObj = testUserList[ new Date().getTime() % 3 ].walletObj;
 				expect( walletObj ).not.toBeNull();
 				expect( EtherWallet.isValidPrivateKey( walletObj.privateKey ) ).toBeTruthy();
 				expect( EtherWallet.isValidPublicKey( walletObj.publicKey ) ).toBeTruthy();
@@ -150,7 +128,7 @@ describe( 'PortalController', () =>
 				//
 				//	randomly, choose a user and favorite the post we just created
 				//
-				walletObj = EtherWallet.createWalletFromMnemonic( testUserList[ new Date().getTime() % 3 ].mnemonic );
+				walletObj = testUserList[ new Date().getTime() % 3 ].walletObj;
 				expect( walletObj ).not.toBeNull();
 				expect( EtherWallet.isValidPrivateKey( walletObj.privateKey ) ).toBeTruthy();
 				expect( EtherWallet.isValidPublicKey( walletObj.publicKey ) ).toBeTruthy();
@@ -201,7 +179,7 @@ describe( 'PortalController', () =>
 				//
 				//	randomly, choose a user and like the post we just created
 				//
-				walletObj = EtherWallet.createWalletFromMnemonic( testUserList[ new Date().getTime() % 3 ].mnemonic );
+				walletObj = testUserList[ new Date().getTime() % 3 ].walletObj;
 				expect( walletObj ).not.toBeNull();
 				expect( EtherWallet.isValidPrivateKey( walletObj.privateKey ) ).toBeTruthy();
 				expect( EtherWallet.isValidPublicKey( walletObj.publicKey ) ).toBeTruthy();
@@ -265,7 +243,7 @@ describe( 'PortalController', () =>
 			for ( let i = 0; i < testUserList.length; i++ )
 			{
 				//	Alice, Bob, Mary
-				walletObj = EtherWallet.createWalletFromMnemonic( testUserList[ i ].mnemonic );
+				walletObj = walletObj = testUserList[ i ].walletObj;
 				expect( walletObj ).not.toBeNull();
 				expect( EtherWallet.isValidPrivateKey( walletObj.privateKey ) ).toBeTruthy();
 				expect( EtherWallet.isValidPublicKey( walletObj.publicKey ) ).toBeTruthy();
@@ -375,13 +353,13 @@ describe( 'PortalController', () =>
 			//
 			//	create role instances
 			//
-			const aliceWalletObj = EtherWallet.createWalletFromMnemonic( testUserList[ testUserAlice ].mnemonic );
+			const aliceWalletObj = testWalletObjList.alice;
 			expect( aliceWalletObj ).not.toBeNull();
 			expect( EtherWallet.isValidPrivateKey( aliceWalletObj.privateKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidPublicKey( aliceWalletObj.publicKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidAddress( aliceWalletObj.address ) ).toBeTruthy();
 
-			const bobWalletObj = EtherWallet.createWalletFromMnemonic( testUserList[ testUserBob ].mnemonic );
+			const bobWalletObj = testWalletObjList.bob;
 			expect( bobWalletObj ).not.toBeNull();
 			expect( EtherWallet.isValidPrivateKey( bobWalletObj.privateKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidPublicKey( bobWalletObj.publicKey ) ).toBeTruthy();
@@ -431,13 +409,13 @@ describe( 'PortalController', () =>
 			//
 			//	create role instances
 			//
-			const aliceWalletObj = EtherWallet.createWalletFromMnemonic( testUserList[ testUserAlice ].mnemonic );
+			const aliceWalletObj = testWalletObjList.alice;
 			expect( aliceWalletObj ).not.toBeNull();
 			expect( EtherWallet.isValidPrivateKey( aliceWalletObj.privateKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidPublicKey( aliceWalletObj.publicKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidAddress( aliceWalletObj.address ) ).toBeTruthy();
 
-			const maryWalletObj = EtherWallet.createWalletFromMnemonic( testUserList[ testUserMary ].mnemonic );
+			const maryWalletObj = testWalletObjList.mary;
 			expect( maryWalletObj ).not.toBeNull();
 			expect( EtherWallet.isValidPrivateKey( maryWalletObj.privateKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidPublicKey( maryWalletObj.publicKey ) ).toBeTruthy();
@@ -490,7 +468,7 @@ describe( 'PortalController', () =>
 			const postService = new PostService();
 			await postService.clearAll();
 
-			walletObj = EtherWallet.createWalletFromMnemonic( testUserList[ testUserAlice ].mnemonic );
+			walletObj = testWalletObjList.alice;
 			expect( walletObj ).not.toBeNull();
 			expect( EtherWallet.isValidPrivateKey( walletObj.privateKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidPublicKey( walletObj.publicKey ) ).toBeTruthy();
@@ -566,20 +544,19 @@ describe( 'PortalController', () =>
 			//
 			//	create role instances
 			//
-			const aliceWalletObj = EtherWallet.createWalletFromMnemonic( testUserList[ testUserAlice ].mnemonic );
+			const aliceWalletObj = testWalletObjList.alice;
 			expect( aliceWalletObj ).not.toBeNull();
 			expect( EtherWallet.isValidPrivateKey( aliceWalletObj.privateKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidPublicKey( aliceWalletObj.publicKey ) ).toBeTruthy();
 			expect( EtherWallet.isValidAddress( aliceWalletObj.address ) ).toBeTruthy();
 
 			//	...
-			const mnemonicsBobAndMary = [
-				testUserList[ testUserBob ].mnemonic,
-				testUserList[ testUserMary ].mnemonic,
+			const walletObjectBobAndMary = [
+				testWalletObjList.bob,
+				testWalletObjList.mary
 			];
-			for ( const mnemonic of mnemonicsBobAndMary )
+			for ( const walletObj of walletObjectBobAndMary )
 			{
-				walletObj = EtherWallet.createWalletFromMnemonic( mnemonic );
 				expect( walletObj ).not.toBeNull();
 				expect( EtherWallet.isValidPrivateKey( walletObj.privateKey ) ).toBeTruthy();
 				expect( EtherWallet.isValidPublicKey( walletObj.publicKey ) ).toBeTruthy();

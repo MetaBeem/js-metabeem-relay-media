@@ -1,43 +1,13 @@
 import request from "supertest";
 import { app, startHttpServer } from "../../src/http/http.js";
 import { describe, expect } from "@jest/globals";
-import { EtherWallet, Web3Digester, Web3Signer } from "debeem-id";
+import { Web3Digester, Web3Signer } from "debeem-id";
 import { ERefDataTypes, FavoriteService, FollowerService, LikeService, PostService, SchemaUtil } from "debeem-store";
 import { TestUtil } from "debeem-utils";
 import _ from "lodash";
+import {testWalletObjList} from "../../src/configs/TestConfig.js";
 
 let server = null;
-
-
-/**
- *    define test users
- */
-export const testUserList = [
-	{
-		id : 1,
-		name : 'Alice',
-		mnemonic : 'olympic cradle tragic crucial exit annual silly cloth scale fine gesture ancient',
-	},
-	{
-		id : 2,
-		name : 'Bob',
-		mnemonic : 'evidence cement snap basket genre fantasy degree ability sunset pistol palace target',
-	},
-	{
-		id : 3,
-		name : 'Mary',
-		mnemonic : 'electric shoot legal trial crane rib garlic claw armed snow blind advance',
-	}
-];
-export const testUserAlice = 0;
-export const testUserBob = 1;
-export const testUserMary = 2;
-export const testWalletObjList = {
-	alice : EtherWallet.createWalletFromMnemonic( testUserList[ 0 ].mnemonic ),
-	bob : EtherWallet.createWalletFromMnemonic( testUserList[ 1 ].mnemonic ),
-	mary : EtherWallet.createWalletFromMnemonic( testUserList[ 2 ].mnemonic ),
-};
-
 
 
 describe( 'PostControllerFavLike', () =>
@@ -76,14 +46,15 @@ describe( 'PostControllerFavLike', () =>
 		//
 		//	close http server
 		//
-		return new Promise( ( resolve ) =>
-		{
-			server.close( () =>
-			{
-				//console.log( 'Http Server is closed' );
-				resolve();	// Test has been completed
-			} );
-		} );
+		await server.close();
+		// return new Promise( ( resolve ) =>
+		// {
+		// 	server.close( () =>
+		// 	{
+		// 		//console.log( 'Http Server is closed' );
+		// 		resolve();	// Test has been completed
+		// 	} );
+		// } );
 	} );
 
 

@@ -1,16 +1,7 @@
 import { EtherWallet } from "debeem-id";
-import { TWalletBaseItem } from "debeem-id/src/models/TWallet";
-
-export interface TestUser
-{
-	id : number,
-	name : string;
-	mnemonic : string;
-	walletObj : TWalletBaseItem;
-}
 
 
-export const testUserList : Array<TestUser> = [
+export const testUserList = [
 	{
 		id : 1,
 		name : `Alice`,
@@ -32,9 +23,9 @@ export const testUserList : Array<TestUser> = [
 ];
 
 
-export const testUserAlice : number = 0;
-export const testUserBob : number = 1;
-export const testUserMary : number = 2;
+export const testUserAlice = 0;
+export const testUserBob = 1;
+export const testUserMary = 2;
 
 
 export const testMnemonicList = {
