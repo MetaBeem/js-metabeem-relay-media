@@ -1,7 +1,7 @@
 import request from "supertest";
 import { app, startHttpServer } from "../../src/http/http.js";
 import { describe, expect } from "@jest/globals";
-import { EtherWallet, Web3Digester, Web3Signer } from "debeem-id";
+import { Web3Digester, Web3Signer } from "debeem-id";
 import { ethers } from "ethers";
 import { ERefDataTypes, SchemaUtil } from "debeem-store";
 import { TestUtil } from "debeem-utils";
