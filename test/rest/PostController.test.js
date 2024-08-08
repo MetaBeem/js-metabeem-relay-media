@@ -562,13 +562,16 @@ describe( 'PostController', () =>
 		it( "should update a record by wallet and address from database", async () =>
 		{
 			let toBeUpdated = {
-				wallet : walletObj.address,
-				address : lastOneAddress,
-				name : `name-${ new Date().toLocaleString() }`,
-				avatar : `https://avatar-${ new Date().toLocaleString() }`,
+				...savedPost,
+				authorName : `authorName-${ new Date().toLocaleString() }`,
+				authorAvatar : `https://avatar-${ new Date().toLocaleString() }`,
+				body : `Hello 1 at ${ new Date().toLocaleString() }`,
+				pictures : [ `pic-${ new Date().toLocaleString() }` ],
+				videos : [ `video-${ new Date().toLocaleString() }` ],
 				remark : `remark .... ${ new Date().toLocaleString() }`,
 			};
-			toBeUpdated.sig = await Web3Signer.signObject( walletObj.privateKey, toBeUpdated );
+			toBeUpdated.sig = await Web3Signer.signObject( walletObj.privateKey, toBeUpdated, exceptedKeys );
+			toBeUpdated.hash = await Web3Digester.hashObject( toBeUpdated );
 			expect( toBeUpdated.sig ).toBeDefined();
 			expect( typeof toBeUpdated.sig ).toBe( 'string' );
 			expect( toBeUpdated.sig.length ).toBeGreaterThanOrEqual( 0 );
@@ -584,10 +587,11 @@ describe( 'PostController', () =>
 					data : toBeUpdated,
 					sig : toBeUpdated.sig
 				} );
+			//console.log( `updateResponse :`, updateResponse );
 			expect( updateResponse ).toBeDefined();
 			expect( updateResponse ).toHaveProperty( 'statusCode' );
 			expect( updateResponse ).toHaveProperty( '_body' );
-			expect( updateResponse.statusCode ).toBe( 400 );
+			expect( updateResponse.statusCode ).toBe( 200 );
 			expect( updateResponse._body ).toBeDefined();
 			expect( updateResponse._body ).toHaveProperty( 'version' );
 			expect( updateResponse._body ).toHaveProperty( 'ts' );
@@ -595,7 +599,7 @@ describe( 'PostController', () =>
 			expect( updateResponse._body ).toHaveProperty( 'error' );
 			expect( updateResponse._body ).toHaveProperty( 'data' );
 			expect( updateResponse._body.error ).toBeDefined();
-			expect( updateResponse._body.error ).toBe( 'updating is banned' );
+			expect( updateResponse._body.error ).toBe( null );
 
 			//	wait for a while
 			await TestUtil.sleep(5 * 1000 );
